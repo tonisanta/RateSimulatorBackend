@@ -7,7 +7,7 @@ namespace RateSimulator.Domain
 {
     public class OneLuzRate : IRate
     {
-        public double PricePerKwH { get; set; } = 0.149641;
+        public double PricePerKwH { get; set; } = 0.201117;
 
         public double CalculateCost(ConsumptionDetail consumptionDetail)
         {

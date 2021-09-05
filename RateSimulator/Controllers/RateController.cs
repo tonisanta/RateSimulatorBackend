@@ -26,18 +26,11 @@ namespace RateSimulator.Controllers
             return Ok("bueno no fa res");
         }
 
-
-        //[HttpPost]
-        //public async Task<IActionResult> ProcessFiles(IFormFile file)
-        //{
-        //    rateService.
-
-        //    return Ok(file.FileName);
-        //}
-
         [HttpPost]
         public async Task<IActionResult> ProcessFiles(List<IFormFile> files)
         {
+            //System.Console.WriteLine(priceConfiguration);
+
             var saveFileTasks = new List<Task<string>>(files.Count);
             foreach (var file in files)
             {
@@ -53,19 +46,26 @@ namespace RateSimulator.Controllers
             }
 
             var result = await rateService.ProcessFilesAsync(pathFiles);
-
-            //using var reader = new StreamReader(filePath);
-            //using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
-
+            DeleteTempFiles(pathFiles);
             return Ok(result);
         }
 
         private async Task<string> SaveFile(IFormFile file)
         {
+            // alomillor ho hauria de fer una task perk sino deu ser el fil principal
             var filePath = Path.GetTempFileName();
             using var stream = System.IO.File.Create(filePath);
             await file.CopyToAsync(stream);
+            stream.SetLength(stream.Length - 23);
             return filePath;
+        }
+
+        private static void DeleteTempFiles(IEnumerable<string> pathFiles)
+        {
+            foreach (var path in pathFiles)
+            {
+                System.IO.File.Delete(path);
+            }
         }
     }
 }

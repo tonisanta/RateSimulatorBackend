@@ -27,14 +27,7 @@ namespace RateSimulator
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.Configure<MyConfig>(Configuration.GetSection("MyConfig"));
-            //services.Configure<ConfigurationPeriods>(Configuration.GetSection("Periods").Get<string[]>());
-            //var myArray = _config.GetSection("MyArray").Get<string[]>();
-
-            //services.Configure<ConfigurationPeriods>(options => Configuration.GetSection("Periods:llano").GetChildren().Bind(options.InicioLlano));
             services.Configure<ConfigurationPeriods>(Configuration.GetSection("Periods"));
-
-            //services.AddTransient(RateService, sp => new RateService());
 
             services.AddOptions();
 

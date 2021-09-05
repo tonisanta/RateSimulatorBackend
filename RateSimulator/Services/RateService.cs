@@ -25,30 +25,25 @@ namespace RateSimulator.Services
         public async Task<Dictionary<string, double>> ProcessFilesAsync(List<string> pathFiles)
         {
             var summaryByRate = new Dictionary<string, double>(2); // por ahora hay 2 tarifas 
-            var precioOneLuzTask = PrecioOneLuz(pathFiles);
-            var precioOneLuz3PeriodosTask = PrecioOneLuz3Periodos(pathFiles);
-            //var precioOneLuzPeriodosTask = ;
+            var precioOneLuzTask = PriceForAllFiles(pathFiles, new OneLuzRate());
+            var precioOneLuz3PeriodosTask = PriceForAllFiles(pathFiles, new OneLuz3PeriodosRate());
 
-            await Task.WhenAll(precioOneLuzTask, precioOneLuz3PeriodosTask);
+            await Task.WhenAll(precioOneLuzTask, precioOneLuz3PeriodosTask).ConfigureAwait(false);
 
-            //var precioOneLuz = ;
-            //var precioOneLuzPeriodos = ;
             summaryByRate.Add("oneluz", precioOneLuzTask.Result);
             summaryByRate.Add("oneluz3periodos", precioOneLuz3PeriodosTask.Result);
             return summaryByRate;
         }
 
-        private async Task<double> PrecioOneLuz(List<string> files)
+        private async Task<double> PriceForAllFiles(List<string> files, IRate rate)
         {
             var processFileTasks = new List<Task<double>>(files.Count);
             foreach (var file in files)
             {
-                processFileTasks.Add(ProcessFileAsync(file, new OneLuzRate()));
-                //total += await ProcessFileAsync(file, new OneLuzRate());
-
+                processFileTasks.Add(ProcessFileAsync(file, rate));
             }
             // await when all processFile finish
-            await Task.WhenAll(processFileTasks);
+            await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
             double total = 0;
             foreach (var task in processFileTasks)
@@ -59,52 +54,26 @@ namespace RateSimulator.Services
             return total;
         }
 
-        private async Task<double> PrecioOneLuz3Periodos(List<string> files)
-        {
-            double total = 0;
-            foreach (var file in files)
-            {
-                total += await ProcessFileAsync(file, new OneLuz3PeriodosRate());
-
-            }
-            // await when all processFile finish
-
-
-            return total;
-        }
 
         private async Task<double> ProcessFileAsync(string filePath, IRate rate)
-        {
-            using var reader = new StreamReader(filePath);
+        {            
+            using FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            fileStream.Seek(157, SeekOrigin.Begin);
+            using var reader = new StreamReader(fileStream);
+
             // se pot canviar per un factory
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             csv.Context.RegisterClassMap<ConsumptionDetailMap>();
 
-            for (int i = 0; i <= 5; i++)
-            {
-                await csv.ReadAsync();
-            }
-            csv.ReadHeader();
-
-            var line = new ConsumptionDetailLine();
+            var line = new ConsumptionDetailLine();            
             var records = csv.EnumerateRecordsAsync(line);
 
             double total = 0;
-            try
+            await foreach (var consumptionLine in records)
             {
-                await foreach (var consumptionLine in records)
-                {
-                    ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
-                    consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
-                    total += rate.CalculateCost(consumptionDetail);
-                }
-            }
-            catch (Exception ex)
-            {
-
-                //Console.WriteLine(ex.Message);
-                Console.WriteLine($"ha acabat total {total}");
-
+                ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
+                consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
+                total += rate.CalculateCost(consumptionDetail);
             }
 
             return total;
