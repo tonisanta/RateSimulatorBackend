@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace RateSimulator.Domain
 {
@@ -16,11 +13,6 @@ namespace RateSimulator.Domain
         {
             this.Nombre = nombre;
             this.Inicio = inicio;
-        }
-
-        public override string ToString()
-        {
-            return $"*{Nombre}* {Inicio} - {Final}";
         }
 
         public int CompareTo(object obj)

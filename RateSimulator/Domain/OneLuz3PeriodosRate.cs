@@ -1,42 +1,51 @@
-﻿using System;
+﻿using RateSimulator.Infrastructure;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RateSimulator.Domain
 {
     public class OneLuz3PeriodosRate : IRate
     {
-        public double PricePerKwHPunta { get; set; } = 0.303723;
-        public double PricePerKwHLlano { get; set; } = 0.189849;
-        public double PricePerKwHValle { get; set; } = 0.141266;
+        private readonly ConfigurationPeriods config;
+        private readonly PriceConfiguration priceConfig;
+        private ConsumptionSummary Summary;
 
-        public double CalculateCost(ConsumptionDetail consumptionDetail)
+        public OneLuz3PeriodosRate(ConfigurationPeriods config, PriceConfiguration priceConfig)
         {
-            var ratePeriod = consumptionDetail.FranjaHoraria.Nombre;
-            double price;
-
-            switch (ratePeriod)
+            this.config = config;
+            this.priceConfig = priceConfig;
+            Summary = new ConsumptionSummary
             {
-                case "punta":
-                    price = PricePerKwHPunta;
-                    break;
-                case "llano":
-                    price = PricePerKwHLlano;
-                    break;
-                case "valle":
-                    price = PricePerKwHValle;
-                    break;
-                default: return -1;
-            }
+                ConsumptionBreakdown = new Dictionary<string, double>(3)
+            };
+        }
 
-            bool isWeekend = consumptionDetail.Date.DayOfWeek == DayOfWeek.Saturday || consumptionDetail.Date.DayOfWeek == DayOfWeek.Sunday;
-            if (isWeekend)
+        public async Task<ConsumptionSummary> ProcessFile(IAsyncEnumerable<ConsumptionDetailLine> consumptionDetailLines)
+        {
+            await foreach (var consumptionLine in consumptionDetailLines)
             {
-                price = PricePerKwHValle;
+                ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
+                consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
+                StoreConsumption(consumptionDetail);
             }
+            CalculateCost();
+            return Summary;
+        }
 
-            return price * (consumptionDetail.Consumption / 1000.0);
+        private void StoreConsumption(ConsumptionDetail consumptionDetail)
+        {
+            var dayOfWeek = consumptionDetail.Date.DayOfWeek;
+            bool isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
+            var ratePeriod = isWeekend ? "valle" : consumptionDetail.FranjaHoraria.Nombre;
+            Summary.AddConsumption(ratePeriod, consumptionDetail.Consumption);
+        }
+
+        private void CalculateCost()
+        {
+            Summary.Cost += priceConfig.PricePerKwHLlano * (Summary.ConsumptionBreakdown["llano"] / 1000.0);
+            Summary.Cost += priceConfig.PricePerKwHPunta * (Summary.ConsumptionBreakdown["punta"] / 1000.0);
+            Summary.Cost += priceConfig.PricePerKwHValle * (Summary.ConsumptionBreakdown["valle"] / 1000.0);
         }
     }
 }

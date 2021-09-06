@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace RateSimulator
+﻿namespace RateSimulator
 {
     public class PriceConfiguration
     {
-        public double PricePerKwHPunta { get; set; } = 0.303723;
-        public double PricePerKwHLlano { get; set; } = 0.189849;
-        public double PricePerKwHValle { get; set; } = 0.141266;
+        public double PricePerKwHPunta { get; set; } = 0.223059;
+        public double PricePerKwHLlano { get; set; } = 0.125877;
+        public double PricePerKwHValle { get; set; } = 0.086632;
 
         public double PricePerKwH { get; set; } = 0.201117;
     }

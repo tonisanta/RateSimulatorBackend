@@ -1,82 +1,68 @@
 ﻿using CsvHelper;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using RateSimulator.Domain;
 using RateSimulator.Infrastructure;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace RateSimulator.Services
 {
     public class RateService
     {
-        private readonly ConfigurationPeriods config;
+        private readonly ConfigurationPeriods periodConfig;
 
         public RateService(IOptions<ConfigurationPeriods> config)
         {
-            this.config = config.Value;
-            this.config.ParseIntervals();
+            this.periodConfig = config.Value;
+            this.periodConfig.ParseIntervals();
         }
 
-        public async Task<Dictionary<string, double>> ProcessFilesAsync(List<string> pathFiles)
+        public async Task<Dictionary<string, ConsumptionSummary>> ProcessFilesAsync(List<string> pathFiles, PriceConfiguration priceConfig)
         {
-            var summaryByRate = new Dictionary<string, double>(2); // por ahora hay 2 tarifas 
-            var precioOneLuzTask = PriceForAllFiles(pathFiles, new OneLuzRate());
-            var precioOneLuz3PeriodosTask = PriceForAllFiles(pathFiles, new OneLuz3PeriodosRate());
+            var summaryByRate = new Dictionary<string, ConsumptionSummary>(2); // por ahora hay 2 tarifas 
+            var precioOneLuzTask = PriceForAllFiles(pathFiles, new OneLuzFactory(periodConfig, priceConfig));
+            var precioOneLuz3PeriodosTask = PriceForAllFiles(pathFiles, new OneLuz3PeriodosFactory(periodConfig, priceConfig));
 
             await Task.WhenAll(precioOneLuzTask, precioOneLuz3PeriodosTask).ConfigureAwait(false);
 
-            summaryByRate.Add("oneluz", precioOneLuzTask.Result);
-            summaryByRate.Add("oneluz3periodos", precioOneLuz3PeriodosTask.Result);
+            summaryByRate.Add("oneLuz", precioOneLuzTask.Result);
+            summaryByRate.Add("oneLuz3Periodos", precioOneLuz3PeriodosTask.Result);
             return summaryByRate;
         }
 
-        private async Task<double> PriceForAllFiles(List<string> files, IRate rate)
+        private async Task<ConsumptionSummary> PriceForAllFiles(List<string> files, IRateFactory rateFactory)
         {
-            var processFileTasks = new List<Task<double>>(files.Count);
+            var processFileTasks = new List<Task<ConsumptionSummary>>(files.Count);
             foreach (var file in files)
             {
-                processFileTasks.Add(ProcessFileAsync(file, rate));
+                processFileTasks.Add(ProcessFileAsync(file, rateFactory.GetInstance()));
             }
-            // await when all processFile finish
+
             await Task.WhenAll(processFileTasks).ConfigureAwait(false);
 
-            double total = 0;
+            var summary = new ConsumptionSummary();
             foreach (var task in processFileTasks)
             {
-                total += task.Result;
+                var taskSummary = task.Result;
+                summary.Add(taskSummary);
             }
 
-            return total;
+            return summary;
         }
 
-
-        private async Task<double> ProcessFileAsync(string filePath, IRate rate)
-        {            
-            using FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            fileStream.Seek(157, SeekOrigin.Begin);
+        private async Task<ConsumptionSummary> ProcessFileAsync(string filePath, IRate rate)
+        {
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            fileStream.Seek(157, SeekOrigin.Begin); // skip initial info
             using var reader = new StreamReader(fileStream);
 
-            // se pot canviar per un factory
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             csv.Context.RegisterClassMap<ConsumptionDetailMap>();
 
-            var line = new ConsumptionDetailLine();            
-            var records = csv.EnumerateRecordsAsync(line);
-
-            double total = 0;
-            await foreach (var consumptionLine in records)
-            {
-                ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
-                consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
-                total += rate.CalculateCost(consumptionDetail);
-            }
-
-            return total;
+            var records = csv.GetRecordsAsync<ConsumptionDetailLine>();
+            return await rate.ProcessFile(records);
         }
     }
 }

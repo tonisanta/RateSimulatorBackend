@@ -14,23 +14,20 @@ namespace RateSimulator.Controllers
     {
         private readonly RateService rateService;
 
-        public RateController(IOptions<ConfigurationPeriods> config) // canviar per IRateService
+        public RateController(IOptions<ConfigurationPeriods> config)
         {
-            //this.rateService = new RateService();
             this.rateService = new RateService(config);
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult GetDefaultPrices()
         {
-            return Ok("bueno no fa res");
+            return Ok(new PriceConfiguration());
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProcessFiles(List<IFormFile> files)
+        public async Task<IActionResult> ProcessFiles([FromForm] List<IFormFile> files, [FromForm] PriceConfiguration priceConfig)
         {
-            //System.Console.WriteLine(priceConfiguration);
-
             var saveFileTasks = new List<Task<string>>(files.Count);
             foreach (var file in files)
             {
@@ -45,18 +42,17 @@ namespace RateSimulator.Controllers
                 pathFiles.Add(task.Result);
             }
 
-            var result = await rateService.ProcessFilesAsync(pathFiles);
+            var result = await rateService.ProcessFilesAsync(pathFiles, priceConfig);
             DeleteTempFiles(pathFiles);
             return Ok(result);
         }
 
-        private async Task<string> SaveFile(IFormFile file)
+        private static async Task<string> SaveFile(IFormFile file)
         {
-            // alomillor ho hauria de fer una task perk sino deu ser el fil principal
             var filePath = Path.GetTempFileName();
             using var stream = System.IO.File.Create(filePath);
             await file.CopyToAsync(stream);
-            stream.SetLength(stream.Length - 23);
+            stream.SetLength(stream.Length - 23); // delete the last line as it doesn't follow the pattern
             return filePath;
         }
 
