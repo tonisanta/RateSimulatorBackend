@@ -26,7 +26,7 @@ namespace RateSimulator.Domain
             await foreach (var consumptionLine in consumptionDetailLines)
             {
                 ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
-                consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
+                consumptionDetail.Period = config.GetClosestPeriod(consumptionDetail.Start);
                 StoreConsumption(consumptionDetail);
             }
             CalculateCost();
@@ -37,7 +37,7 @@ namespace RateSimulator.Domain
         {
             var dayOfWeek = consumptionDetail.Date.DayOfWeek;
             bool isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
-            var ratePeriod = isWeekend ? "valle" : consumptionDetail.FranjaHoraria.Nombre;
+            var ratePeriod = isWeekend ? "valle" : consumptionDetail.Period.Name; // during the weekend is cheaper
             Summary.AddConsumption(ratePeriod, consumptionDetail.Consumption);
         }
 

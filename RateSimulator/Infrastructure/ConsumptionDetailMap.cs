@@ -4,6 +4,7 @@ namespace RateSimulator.Infrastructure
 {
     public class ConsumptionDetailMap : ClassMap<ConsumptionDetailLine>
     {
+        // to read the csv header
         public ConsumptionDetailMap()
         {
             Map(m => m.Date).Name("Fecha");

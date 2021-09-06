@@ -15,59 +15,57 @@ namespace RateSimulator
         [JsonPropertyName("punta")]
         public List<string> InicioPunta { get; set; }
 
-        private List<FranjaHoraria> _intervalos;
+        private List<Period> periods;
 
         public void ParseIntervals()
         {
-            _intervalos = new List<FranjaHoraria>();
+            periods = new List<Period>();
 
             foreach (string s in InicioValle)
             {
-                TimeSpan inicio = TimeSpan.Parse(s);
-                FranjaHoraria franja = new FranjaHoraria("valle", inicio);
-                _intervalos.Add(franja);
+                TimeSpan start = TimeSpan.Parse(s);
+                Period period = new Period("valle", start);
+                periods.Add(period);
             }
 
             foreach (string s in InicioLlano)
             {
-                TimeSpan inicio = TimeSpan.Parse(s);
-                FranjaHoraria franja = new FranjaHoraria("llano", inicio);
-                _intervalos.Add(franja);
+                TimeSpan start = TimeSpan.Parse(s);
+                Period period = new Period("llano", start);
+                periods.Add(period);
             }
 
             foreach (string s in InicioPunta)
             {
-                TimeSpan inicio = TimeSpan.Parse(s);
-                FranjaHoraria franja = new FranjaHoraria("punta", inicio);
-                _intervalos.Add(franja);
+                TimeSpan start = TimeSpan.Parse(s);
+                Period period = new Period("punta", start);
+                periods.Add(period);
             }
 
-            _intervalos.Sort();
+            periods.Sort();
         }
 
-        public FranjaHoraria GetFranja(TimeSpan time)
+        public Period GetClosestPeriod(TimeSpan time)
         {
-            FranjaHoraria franjaActual = new FranjaHoraria("", time);
-            int index = _intervalos.BinarySearch(franjaActual);
-            int actual;
+            Period currentPeriod = new Period("", time);
+            int index = periods.BinarySearch(currentPeriod);
 
             if (index >= 0)
             {
-                actual = index;
-                int siguiente = (index + 1) % _intervalos.Count;
-                franjaActual = _intervalos.ElementAt(index);
-                franjaActual.Final = _intervalos.ElementAt(siguiente).Inicio;
+                int next = (index + 1) % periods.Count;
+                currentPeriod = periods.ElementAt(index);
+                currentPeriod.End = periods.ElementAt(next).Start;
             }
             else
             {
-                actual = (~index - 1) % _intervalos.Count;
-                int next = (actual + 1) % _intervalos.Count;
+                int current = (~index - 1) % periods.Count;
+                int next = (current + 1) % periods.Count;
 
-                franjaActual = _intervalos.ElementAt(actual);
-                franjaActual.Final = _intervalos.ElementAt(next).Inicio;
+                currentPeriod = periods.ElementAt(current);
+                currentPeriod.End = periods.ElementAt(next).Start;
             }
 
-            return franjaActual;
+            return currentPeriod;
         }
     }
 }

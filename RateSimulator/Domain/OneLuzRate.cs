@@ -15,10 +15,7 @@ namespace RateSimulator.Domain
         {
             this.config = config;
             this.priceConfig = priceConfig;
-            Summary = new ConsumptionSummary
-            {
-                ConsumptionBreakdown = new Dictionary<string, double>(1)
-            };
+            Summary = new ConsumptionSummary();
         }
 
         public async Task<ConsumptionSummary> ProcessFile(IAsyncEnumerable<ConsumptionDetailLine> consumptionDetailLines)
@@ -27,14 +24,11 @@ namespace RateSimulator.Domain
             await foreach (var consumptionLine in consumptionDetailLines)
             {
                 ConsumptionDetail consumptionDetail = consumptionLine.GetConsumptionDetail();
-                consumptionDetail.FranjaHoraria = config.GetFranja(consumptionDetail.Start);
+                consumptionDetail.Period = config.GetClosestPeriod(consumptionDetail.Start);
                 totalConsumption += consumptionLine.Consumption;
             }
 
-            Summary.ConsumptionBreakdown = new Dictionary<string, double>
-            {
-                {"unique-rate", totalConsumption}
-            };
+            Summary.ConsumptionBreakdown["unique-rate"] = totalConsumption;
             CalculateCost();
             return Summary;
         }

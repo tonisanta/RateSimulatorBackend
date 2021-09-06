@@ -8,6 +8,6 @@ namespace RateSimulator.Domain
         public TimeSpan Start { get; set; }
         public TimeSpan End { get; set; }
         public uint Consumption { get; set; }
-        public FranjaHoraria FranjaHoraria { get; set; }
+        public Period Period { get; set; }
     }
 }
