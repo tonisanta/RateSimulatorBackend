@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RateSimulator.Services;
 using System.Collections.Generic;
@@ -13,10 +14,13 @@ namespace RateSimulator.Controllers
     public class RateController : ControllerBase
     {
         private readonly RateService rateService;
+        private readonly ILogger<RateController> logger;
 
-        public RateController(IOptions<ConfigurationPeriods> config)
+
+        public RateController(IOptions<ConfigurationPeriods> config, ILogger<RateController> logger)
         {
             this.rateService = new RateService(config);
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -47,14 +51,15 @@ namespace RateSimulator.Controllers
                 var result = await rateService.ProcessFilesAsync(pathFiles, priceConfig);
                 return Ok(result);
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                logger.LogError(ex.Message);
                 return BadRequest();
             }
             finally
             {
                 DeleteTempFiles(pathFiles);
-            }         
+            }
         }
 
         private static async Task<string> SaveFile(IFormFile file)
