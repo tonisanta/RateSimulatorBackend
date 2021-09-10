@@ -21,7 +21,7 @@ namespace RateSimulator.Services
 
         public async Task<Dictionary<string, ConsumptionSummary>> ProcessFilesAsync(List<string> pathFiles, PriceConfiguration priceConfig)
         {
-            var summaryByRate = new Dictionary<string, ConsumptionSummary>(2); // por ahora hay 2 tarifas 
+            var summaryByRate = new Dictionary<string, ConsumptionSummary>(2);
             var precioOneLuzTask = PriceForAllFiles(pathFiles, new OneLuzFactory(periodConfig, priceConfig));
             var precioOneLuz3PeriodosTask = PriceForAllFiles(pathFiles, new OneLuz3PeriodosFactory(periodConfig, priceConfig));
 

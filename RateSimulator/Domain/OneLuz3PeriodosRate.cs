@@ -18,6 +18,11 @@ namespace RateSimulator.Domain
             Summary = new ConsumptionSummary
             {
                 ConsumptionBreakdown = new Dictionary<string, double>(3)
+                {
+                    { "llano", 0 },
+                    { "punta", 0 },
+                    { "valle", 0 }
+                }
             };
         }
 

@@ -42,9 +42,19 @@ namespace RateSimulator.Controllers
                 pathFiles.Add(task.Result);
             }
 
-            var result = await rateService.ProcessFilesAsync(pathFiles, priceConfig);
-            DeleteTempFiles(pathFiles);
-            return Ok(result);
+            try
+            {
+                var result = await rateService.ProcessFilesAsync(pathFiles, priceConfig);
+                return Ok(result);
+            }
+            catch (System.Exception)
+            {
+                return BadRequest();
+            }
+            finally
+            {
+                DeleteTempFiles(pathFiles);
+            }         
         }
 
         private static async Task<string> SaveFile(IFormFile file)
