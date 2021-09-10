@@ -52,7 +52,6 @@ namespace RateSimulator.Controllers
             var filePath = Path.GetTempFileName();
             using var stream = System.IO.File.Create(filePath);
             await file.CopyToAsync(stream);
-            stream.SetLength(stream.Length - 23); // delete the last line as it doesn't follow the pattern
             return filePath;
         }
 

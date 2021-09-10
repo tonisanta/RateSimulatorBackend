@@ -55,14 +55,32 @@ namespace RateSimulator.Services
         private async Task<ConsumptionSummary> ProcessFileAsync(string filePath, IRate rate)
         {
             using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            fileStream.Seek(157, SeekOrigin.Begin); // skip initial info
             using var reader = new StreamReader(fileStream);
+
+            // skip header info. Would be better to be able to skip it with a seek but it has a dynamic size
+            for (int i = 0; i <= 5; i++)
+            {
+                await reader.ReadLineAsync().ConfigureAwait(false);
+            }
 
             using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
             csv.Context.RegisterClassMap<ConsumptionDetailMap>();
 
-            var records = csv.GetRecordsAsync<ConsumptionDetailLine>();
+            var records = GetLinesAsync(csv);
             return await rate.ProcessFile(records);
+        }
+
+        private async IAsyncEnumerable<ConsumptionDetailLine> GetLinesAsync(CsvReader csv)
+        {
+            while (await csv.ReadAsync())
+            {
+                var firstItem = csv.GetField(0);
+                // to skip last line as it doesn't follow the pattern: ,Total (Wh):,xyz
+                if (string.IsNullOrWhiteSpace(firstItem)) break;
+
+                yield return csv.GetRecord<ConsumptionDetailLine>();
+            }
+
         }
     }
 }
