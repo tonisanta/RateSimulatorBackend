@@ -29,7 +29,7 @@ namespace RateSimulator
                 options.AddDefaultPolicy(
                                   builder =>
                                   {
-                                      builder.WithOrigins("http://localhost:3000", "https://rate-simulator.herokuapp.com")
+                                      builder.WithOrigins("http://localhost:3000", "https://rate-simulator.herokuapp.com", "http://rate-simulator.herokuapp.com")
                                                           .AllowAnyHeader()
                                                           .AllowAnyMethod();
                                   });
