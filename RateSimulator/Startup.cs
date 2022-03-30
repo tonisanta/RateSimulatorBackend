@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Prometheus;
 using System.Globalization;
 
 namespace RateSimulator
@@ -56,9 +57,13 @@ namespace RateSimulator
             // to use the dot as decimal separator
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
+            app.UseHttpMetrics(options =>
+            {
+                options.AddCustomLabel("host", context => context.Request.Host.Host);
+            });
 
             app.UseCors();
 
@@ -67,6 +72,7 @@ namespace RateSimulator
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapMetrics();
             });
         }
     }
