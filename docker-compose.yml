@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  api-rate-simulator:
+    image: "api-rate-simulator"
+    container_name: api-rate-simulator-container
+    ports:
+      - "80:80"
+  prometheus:
+    image: "my-prometheus"
+    container_name: prometheus-container
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./metrics/prometheus/storage:/prometheus
+  grafana:
+    image: "my-grafana"
+    container_name: grafana-container
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./metrics/grafana/storage:/var/lib/grafana
