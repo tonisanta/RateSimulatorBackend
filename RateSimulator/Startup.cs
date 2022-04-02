@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Prometheus;
+using System;
 using System.Globalization;
 
 namespace RateSimulator
@@ -30,6 +31,7 @@ namespace RateSimulator
                 options.AddDefaultPolicy(
                                   builder =>
                                   {
+                                      builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
                                       builder.WithOrigins("http://localhost:3000", "https://rate-simulator.herokuapp.com", "http://rate-simulator.herokuapp.com")
                                                           .AllowAnyHeader()
                                                           .AllowAnyMethod();

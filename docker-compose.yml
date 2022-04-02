@@ -1,5 +1,10 @@
 version: "3.8"
 services:
+  front-rate-simulator:
+    image: "front-rate-simulator"
+    container_name: front-rate-simulator-container
+    ports:
+      - "8080:80"
   api-rate-simulator:
     image: "api-rate-simulator"
     container_name: api-rate-simulator-container
