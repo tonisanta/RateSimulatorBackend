@@ -1,6 +1,6 @@
 # Rate Simulator
 
-This project is the back-end of the [Rate Simulator](http://rate-simulator.herokuapp.com/) , it's a REST API to analyze light consumption. To do so, you need to provide the bill extraction in **CSV** format, for now only supports **Endesa** format (as it's the main provider in Spain). You can download the bill export file from the [client area](https://www.endesaclientes.com/oficina/mis-facturas.html).
+This project is the back-end of the [Rate Simulator](http://toni.westeurope.cloudapp.azure.com:8080/) , it's a REST API to analyze light consumption. To do so, you need to provide the bill extraction in **CSV** format, for now only supports **Endesa** format (as it's the main provider in Spain). You can download the bill export file from the [client area](https://www.endesaclientes.com/oficina/mis-facturas.html).
 
 ## Example file
 
