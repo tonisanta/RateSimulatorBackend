@@ -28,14 +28,14 @@ namespace RateSimulator
 
             services.AddCors(options =>
             {
-                options.AddDefaultPolicy(
-                                  builder =>
-                                  {
-                                      builder.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost");
-                                      builder.WithOrigins("http://localhost:3000", "https://rate-simulator.herokuapp.com", "http://rate-simulator.herokuapp.com")
-                                                          .AllowAnyHeader()
-                                                          .AllowAnyMethod();
-                                  });
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.SetIsOriginAllowed(origin =>
+                    {
+                        Uri uri = new Uri(origin);
+                        return IsHostValid(uri.Host);
+                    });
+                });
             });
 
             services.AddControllers();
@@ -44,6 +44,11 @@ namespace RateSimulator
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "RateSimulator", Version = "v1" });
             });
+        }
+
+        private bool IsHostValid(string host)
+        {
+            return host.Equals("localhost") || host.Equals("toni.westeurope.cloudapp.azure.com");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
